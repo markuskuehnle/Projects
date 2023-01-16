@@ -1,5 +1,5 @@
 # 💫 About Me:
-Hi, I'm Markus.<br>Currently I'm working on Data Analytics and Machine Learning Projects, since I'm transitioning from Software Engineering (Automation) to Data Science.<br><br>Also, I'm highly interested in photography.
+Hi, I'm Markus.<br>Currently I'm working on Data Analytics, Machine Learning and Software Engineering / Automation Projects.<br><br>Also, I'm highly interested in photography.
 
 
 ## 🌐 Socials:
