@@ -1,5 +1,5 @@
 # 💫 About Me:
-Hi, I'm Markus.<br>Currently I'm a Information Systems Student, highly interested in Software Engineering / Automation / Machine Learning Projects.<br>
+Hi, I'm Markus.<br>I'm an Information Systems student, highly interested in Software Engineering / Automation / Machine Learning Projects.<br>
 
 
 ## 🌐 Socials:
