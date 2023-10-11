@@ -1,5 +1,5 @@
 # 💫 About Me:
-Hi, I'm Markus.<br>I'm a data enthusiast, highly interested in Software Engineering / Automation / Machine Learning Projects.<br>
+Hi, I'm Markus.<br>I'm a data enthusiast, highly interested in Software Engineering / Automation / Data Engineering, Analytics and Machine Learning Projects.<br>
 
 
 ## 🌐 Socials:
