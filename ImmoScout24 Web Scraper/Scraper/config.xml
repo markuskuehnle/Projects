@@ -1,0 +1,8 @@
+<configuration>
+    <base_url>https://www.immobilienscout24.de</base_url>
+    <log_path>Log/scraper.log</log_path>
+    <output_path>Data/listings.db</output_path>
+    <rooms>1.5-</rooms>
+    <price>-600.0</price>
+    <livingspace>30.0-60.0</livingspace>
+</configuration>
