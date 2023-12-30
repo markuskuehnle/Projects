@@ -25,8 +25,14 @@ Before you begin, ensure you have met the following requirements:
 
 1. **Clone the Repository:**
    ```
-   git clone https://github.com/markuskuehnle/ImmoScout24-Web-Scraper.git
+   git init ImmoScout24-Web-Scraper
    cd ImmoScout24-Web-Scraper
+
+   git remote add -f origin https://github.com/markuskuehnle/Projects.git
+   git config core.sparseCheckout true
+   echo "ImmoScout24 Web Scraper/" >> .git/info/sparse-checkout
+   
+   git pull origin main
    ```
 
 2. **Set Up a Virtual Environment (Optional but Recommended):**
