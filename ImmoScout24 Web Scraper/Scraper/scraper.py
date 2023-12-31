@@ -72,7 +72,7 @@ class ImmoScout24Scraper:
                         living_space = float(living_space)
                     elif 'Zi.' in label:
                         rooms = value.replace(',', '.')
-                        rooms = value
+                        rooms = float(rooms)
 
                 # Extract secondary criteria
                 secondary_criteria_list = []
