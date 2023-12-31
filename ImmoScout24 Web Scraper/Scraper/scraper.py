@@ -58,6 +58,8 @@ class ImmoScout24Scraper:
                 try:
                     data_id = element.get_attribute('data-id')
                     title = element.find_element(By.CSS_SELECTOR, 'h2.result-list-entry__brand-title').text
+                    # Remove "NEU" if it's in the title
+                    title = title.replace("NEU", "").strip()
                     address = format_address(element.find_element(By.CSS_SELECTOR, 'div.result-list-entry__address').text)
 
                     # Extract living space, rooms
