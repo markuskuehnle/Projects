@@ -43,68 +43,84 @@ class ImmoScout24Scraper:
         notify_user_to_solve_captcha()
 
     def extract_listings(self, conn):
-        """ Extract listings from the current page. """
+        """ Extract listings from the current page and handle pagination. """
         listings = []
-        listing_elements = self.driver.find_elements(By.CLASS_NAME, "result-list__listing")
-
+        page_number = 0
+                    
         # Get current date
         extraction_date = datetime.now().strftime("%Y-%m-%d")
 
-        for element in listing_elements:
+        while True:
+            page_number += 1
+            listing_elements = self.driver.find_elements(By.CLASS_NAME, "result-list__listing")
+
+            for element in listing_elements:
+                try:
+                    data_id = element.get_attribute('data-id')
+                    title = element.find_element(By.CSS_SELECTOR, 'h2.result-list-entry__brand-title').text
+                    address = format_address(element.find_element(By.CSS_SELECTOR, 'div.result-list-entry__address').text)
+
+                    # Extract living space, rooms
+                    living_space = rooms = None
+                    criteria_elements = element.find_elements(By.CSS_SELECTOR, 'dl.result-list-entry__primary-criterion')
+
+                    for criteria in criteria_elements:
+                        label = criteria.find_element(By.TAG_NAME, 'dt').text.strip()
+                        value = criteria.find_element(By.TAG_NAME, 'dd').text.strip()
+
+                        if 'Kaltmiete' in label:
+                            kaltmiete = value.replace(' €', '').replace('.', '').replace(',', '.') # Remove ' €'
+                            kaltmiete = float(kaltmiete)
+                        elif 'Wohnfläche' in label:
+                            living_space = value.replace(' m²', '').replace(',', '.') # Remove ' m²'
+                            living_space = float(living_space)
+                        elif 'Zi.' in label:
+                            rooms = value.replace(',', '.')
+                            rooms = float(rooms)
+
+                    # Extract secondary criteria
+                    secondary_criteria_list = []
+                    secondary_criteria_ul = element.find_elements(By.CSS_SELECTOR, 'ul.result-list-entry__secondary-criteria')
+                    if secondary_criteria_ul:
+                        secondary_criteria_items = secondary_criteria_ul[0].find_elements(By.TAG_NAME, 'li')
+                        for item in secondary_criteria_items:
+                            criteria_text = item.text.strip()
+                            if criteria_text != "...":  # Exclude unspecified criteria
+                                secondary_criteria_list.append(criteria_text)
+
+                    secondary_criteria_str = convert_list_to_string(secondary_criteria_list)
+
+                    # Append extracted data to listings
+                    listings.append({
+                        'data_id': data_id,
+                        'title': title,
+                        'address': address,
+                        'kaltmiete': kaltmiete,
+                        'living_space': living_space,
+                        'rooms': rooms,
+                        'secondary_criteria': secondary_criteria_str
+                    })
+
+                    # Check if the listing already exists
+                    if not check_listing_exists(conn, data_id, extraction_date):
+                        # Insert into the database
+                        listing = (data_id, title, address, kaltmiete, living_space, rooms, secondary_criteria_str, extraction_date)
+                        insert_listing(conn, listing)
+
+                except Exception as e:
+                    logging.error(f"Error extracting data from listing: {e}")
+
+            # Check if there is a next page
             try:
-                data_id = element.get_attribute('data-id')
-                title = element.find_element(By.CSS_SELECTOR, 'h2.result-list-entry__brand-title').text
-                address = format_address(element.find_element(By.CSS_SELECTOR, 'div.result-list-entry__address').text)
-
-                # Extract living space, rooms
-                living_space = rooms = None
-                criteria_elements = element.find_elements(By.CSS_SELECTOR, 'dl.result-list-entry__primary-criterion')
-
-                for criteria in criteria_elements:
-                    label = criteria.find_element(By.TAG_NAME, 'dt').text.strip()
-                    value = criteria.find_element(By.TAG_NAME, 'dd').text.strip()
-
-                    if 'Kaltmiete' in label:
-                        kaltmiete = value.replace(' €', '').replace('.', '').replace(',', '.') # Remove ' €'
-                        kaltmiete = float(kaltmiete)
-                    elif 'Wohnfläche' in label:
-                        living_space = value.replace(' m²', '').replace(',', '.') # Remove ' m²'
-                        living_space = float(living_space)
-                    elif 'Zi.' in label:
-                        rooms = value.replace(',', '.')
-                        rooms = float(rooms)
-
-                # Extract secondary criteria
-                secondary_criteria_list = []
-                secondary_criteria_ul = element.find_elements(By.CSS_SELECTOR, 'ul.result-list-entry__secondary-criteria')
-                if secondary_criteria_ul:
-                    secondary_criteria_items = secondary_criteria_ul[0].find_elements(By.TAG_NAME, 'li')
-                    for item in secondary_criteria_items:
-                        criteria_text = item.text.strip()
-                        if criteria_text != "...":  # Exclude unspecified criteria
-                            secondary_criteria_list.append(criteria_text)
-
-                secondary_criteria_str = convert_list_to_string(secondary_criteria_list)
-
-                # Append extracted data to listings
-                listings.append({
-                    'data_id': data_id,
-                    'title': title,
-                    'address': address,
-                    'kaltmiete': kaltmiete,
-                    'living_space': living_space,
-                    'rooms': rooms,
-                    'secondary_criteria': secondary_criteria_str
-                })
-
-                # Check if the listing already exists
-                if not check_listing_exists(conn, data_id, extraction_date):
-                    # Insert into the database
-                    listing = (data_id, title, address, kaltmiete, living_space, rooms, secondary_criteria_str, extraction_date)
-                    insert_listing(conn, listing)
-
+                next_page_button = self.driver.find_element(By.CSS_SELECTOR, "li.p-next:not(.disabled) a[aria-label='Next page']")
+                if next_page_button:
+                    next_page_button.click()
+                    time.sleep(5)  # Wait for the next page to load
+                else:
+                    break  # Exit the loop if no more pages
             except Exception as e:
-                logging.error(f"Error extracting data from listing: {e}")
+                logging.error(f"Pagination error: {e}")
+                break
 
         logging.info(f"Script ended")
         return listings
@@ -143,8 +159,11 @@ if __name__ == "__main__":
     price = root.find('price').text
     livingspace = root.find('livingspace').text
 
-    # Construct the search path
-    SEARCH_PATH = f"/Suche/de/baden-wuerttemberg/ulm/wohnung-mieten?numberofrooms={rooms}&price={price}&livingspace={livingspace}&pricetype=rentpermonth&enteredFrom=result_list"
+    # Construct the search path#
+    # specific search
+    # SEARCH_PATH = f"/Suche/de/baden-wuerttemberg/ulm/wohnung-mieten?numberofrooms={rooms}&price={price}&livingspace={livingspace}&pricetype=rentpermonth&enteredFrom=result_list"
+    # broad search
+    SEARCH_PATH = f"/Suche/de/baden-wuerttemberg/ulm/wohnung-mieten"
 
     # Configure logging to include timestamp
     logging.basicConfig(filename=LOG_PATH,
