@@ -22,7 +22,8 @@ def create_table(conn):
             living_space real,
             rooms real,
             secondary_criteria text,
-            date text
+            date text,
+            expose_url text
         );
         """
         cur = conn.cursor()
@@ -44,8 +45,8 @@ def insert_listing(conn, listing):
     """ Insert a new listing into the listings table. """
     try:
         query = ''' 
-        INSERT OR IGNORE INTO listings(data_id, title, address, kaltmiete, living_space, rooms, secondary_criteria, date)
-        VALUES(?,?,?,?,?,?,?,?) 
+        INSERT OR IGNORE INTO listings(data_id, title, address, kaltmiete, living_space, rooms, secondary_criteria, date, expose_url)
+        VALUES(?,?,?,?,?,?,?,?,?) 
         '''
         cur = conn.cursor()
         cur.execute(query, listing)

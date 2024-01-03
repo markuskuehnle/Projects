@@ -61,6 +61,8 @@ class ImmoScout24Scraper:
                     # Remove "NEU" if it's in the title
                     title = title.replace("NEU", "").strip()
                     address = format_address(element.find_element(By.CSS_SELECTOR, 'div.result-list-entry__address').text)
+                    expose_url_element = element.find_element(By.CSS_SELECTOR, 'div.result-list-entry__data a[href]')
+                    expose_url = expose_url_element.get_attribute('href')
 
                     # Extract living space, rooms
                     living_space = rooms = None
@@ -100,13 +102,14 @@ class ImmoScout24Scraper:
                         'kaltmiete': kaltmiete,
                         'living_space': living_space,
                         'rooms': rooms,
-                        'secondary_criteria': secondary_criteria_str
+                        'secondary_criteria': secondary_criteria_str,
+                        'url': expose_url
                     })
 
                     # Check if the listing already exists
                     if not check_listing_exists(conn, data_id, extraction_date):
                         # Insert into the database
-                        listing = (data_id, title, address, kaltmiete, living_space, rooms, secondary_criteria_str, extraction_date)
+                        listing = (data_id, title, address, kaltmiete, living_space, rooms, secondary_criteria_str, extraction_date, expose_url)
                         insert_listing(conn, listing)
 
                 except Exception as e:
