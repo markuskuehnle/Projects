@@ -95,6 +95,11 @@ def main():
         # Multiselect widget for secondary criteria keywords
         selected_keywords = st.multiselect("Filter by Secondary Criteria:", unique_keywords)
 
+        # Address search filter
+        address_query = st.text_input("Search in Address")
+        if address_query:
+            filtered_data = filtered_data[filtered_data['address'].str.contains(address_query, case=False, na=False)]
+
         # Filter the data based on selected keywords
         if selected_keywords:
             filtered_data = filtered_data[filtered_data['secondary_criteria'].apply(lambda x: any(keyword in x for keyword in selected_keywords))]
@@ -107,6 +112,7 @@ def main():
         elif status_filter_analytics == "Unlisted":
             filtered_data = filtered_data[filtered_data['status'] == 'unlisted']
 
+        #geocoded_data = get_geocoded_data(filtered_data)
 
         n = len(filtered_data)
         st.write(f"Number of results: {n}")
@@ -121,6 +127,11 @@ def main():
         fig2 = px.histogram(filtered_data, x="kaltmiete", title="Price Distribution")
         st.plotly_chart(fig2)
 
+        # Display links to listed objects
+        st.subheader("Links to Listed Properties")
+        listed_properties = filtered_data[filtered_data['status'] == 'listed']
+        for index, row in listed_properties.iterrows():
+            st.markdown(f"[{row['title']}]({row['expose_url']})")
         
 # Run the app
 if __name__ == "__main__":
